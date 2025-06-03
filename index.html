@@ -14,12 +14,22 @@
 </head>
 <body>
 
+  <!-- LOGO -->
+  <div style="text-align: center;">
+    <img src="https://raw.githubusercontent.com/WAEngenhariaMA/rifa-apecad/main/logo-apecad.png.png"
+         alt="Logo APECAD"
+         style="max-width: 200px; height: auto; margin-bottom: 10px;">
+  </div>
+
   <h2>🎟️ <strong>Rifa APECAD 2025</strong></h2>
   <p>Cada número custa <strong>R$ 10,00</strong>. Escolha seus números abaixo:</p>
 
+  <!-- GRADE DE NÚMEROS -->
   <div id="grid" class="grid"></div>
 
-  <form action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec" method="POST" id="formulario">
+  <!-- FORMULÁRIO -->
+  <form action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec"
+        method="POST" id="formulario">
     <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required><br>
     <input type="text" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" required><br>
     <input type="hidden" name="numeros" id="numeros">
@@ -28,6 +38,7 @@
 
   <p id="resposta"></p>
 
+  <!-- SCRIPT -->
   <script>
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
@@ -53,6 +64,7 @@
       grid.appendChild(btn);
     }
 
+    // CARREGAR NÚMEROS OCUPADOS
     async function carregarOcupados() {
       const res = await fetch("https://opensheet.elk.sh/1tqeY7nKhF_tQfWCpB9hXY-TCSKkAtjBvT-fqHZeu8wU/Página1");
       const dados = await res.json();
