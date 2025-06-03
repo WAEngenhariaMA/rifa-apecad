@@ -4,32 +4,55 @@
   <meta charset="UTF-8">
   <title>🎟️ Rifa APECAD 2025</title>
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-    .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; max-width: 600px; margin: auto; }
-    .btn { padding: 10px; background: #00cc00; color: white; border: none; border-radius: 5px; cursor: pointer; }
-    .ocupado { background: gray !important; cursor: not-allowed; }
-    .selecionado { background: orange !important; }
-    input { padding: 8px; margin: 5px; width: 250px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(10, 1fr);
+      gap: 5px;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .btn {
+      padding: 10px;
+      background: #f7931e; /* Laranja da logo */
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .ocupado {
+      background: gray !important;
+      cursor: not-allowed;
+    }
+
+    .selecionado {
+      background: #cc0000 !important; /* Vermelho ao clicar */
+    }
+
+    input {
+      padding: 8px;
+      margin: 5px;
+      width: 250px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- LOGO -->
-  <div style="text-align: center;">
-    <img src="https://raw.githubusercontent.com/WAEngenhariaMA/rifa-apecad/main/logo-apecad.png.png"
-         alt="Logo APECAD"
-         style="max-width: 200px; height: auto; margin-bottom: 10px;">
-  </div>
+  <img src="https://raw.githubusercontent.com/WAEngenhariaMA/rifa-apecad/main/logo-apecad.png" alt="Logo APECAD" width="150">
 
   <h2>🎟️ <strong>Rifa APECAD 2025</strong></h2>
   <p>Cada número custa <strong>R$ 10,00</strong>. Escolha seus números abaixo:</p>
 
-  <!-- GRADE DE NÚMEROS -->
   <div id="grid" class="grid"></div>
 
-  <!-- FORMULÁRIO -->
-  <form action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec"
-        method="POST" id="formulario">
+  <form action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec" method="POST" id="formulario">
     <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required><br>
     <input type="text" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" required><br>
     <input type="hidden" name="numeros" id="numeros">
@@ -38,7 +61,6 @@
 
   <p id="resposta"></p>
 
-  <!-- SCRIPT -->
   <script>
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
@@ -64,7 +86,6 @@
       grid.appendChild(btn);
     }
 
-    // CARREGAR NÚMEROS OCUPADOS
     async function carregarOcupados() {
       const res = await fetch("https://opensheet.elk.sh/1tqeY7nKhF_tQfWCpB9hXY-TCSKkAtjBvT-fqHZeu8wU/Página1");
       const dados = await res.json();
