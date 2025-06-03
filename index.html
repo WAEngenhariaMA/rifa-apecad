@@ -20,14 +20,18 @@
 
   <div id="grid" class="grid"></div>
 
-  <br>
-  <input type="text" id="nome" placeholder="Seu nome completo"><br>
-  <input type="text" id="tel" placeholder="Seu telefone ou WhatsApp"><br><br>
-  <button onclick="enviar()">✅ Reservar Números</button>
+  <form action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec" method="POST" id="formulario">
+    <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required><br>
+    <input type="text" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" required><br>
+    <input type="hidden" name="numeros" id="numeros">
+    <button type="submit">✅ Reservar Números</button>
+  </form>
+
   <p id="resposta"></p>
 
   <script>
     const grid = document.getElementById("grid");
+    const campoNumeros = document.getElementById("numeros");
     let selecionados = [];
 
     for (let i = 1; i <= 200; i++) {
@@ -35,6 +39,7 @@
       let btn = document.createElement("button");
       btn.innerText = n;
       btn.className = "btn";
+      btn.type = "button";
       btn.onclick = () => {
         if (btn.classList.contains("ocupado")) return;
         btn.classList.toggle("selecionado");
@@ -43,6 +48,7 @@
         } else {
           selecionados.push(n);
         }
+        campoNumeros.value = selecionados.join(",");
       };
       btn.id = "btn" + n;
       grid.appendChild(btn);
@@ -62,27 +68,6 @@
           });
         }
       });
-    }
-
-    async function enviar() {
-      const nome = document.getElementById("nome").value.trim();
-      const tel = document.getElementById("tel").value.trim();
-      if (!nome || !tel || selecionados.length === 0) {
-        alert("Preencha todos os campos e selecione pelo menos um número.");
-        return;
-      }
-
-      const res = await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
-        method: "POST",
-        body: JSON.stringify({ nome: nome, telefone: tel, numeros: selecionados }),
-        headers: { "Content-Type": "application/json" }
-      });
-
-      const txt = await res.text();
-      document.getElementById("resposta").innerText = txt === "OK" 
-        ? "✅ Números reservados com sucesso!" 
-        : "❌ Erro: algum número já foi escolhido.";
-      if (txt === "OK") location.reload();
     }
 
     carregarOcupados();
