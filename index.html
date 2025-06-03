@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Rifa APECAD 2025</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; max-width: 600px; margin: auto; }
+    .btn { padding: 10px; background: #00cc00; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    .ocupado { background: gray !important; cursor: not-allowed; }
+    .selecionado { background: orange !important; }
+    input { padding: 8px; margin: 5px; width: 250px; }
+  </style>
+</head>
+<body>
+
+  <h2>🎟️ Rifa APECAD 2025</h2>
+  <p>Cada número custa <strong>R$ 10,00</strong>. Escolha seus números abaixo:</p>
+
+  <div id="grid" class="grid"></div>
+
+  <br>
+  <input type="text" id="nome" placeholder="Seu nome completo"><br>
+  <input type="text" id="tel" placeholder="Seu telefone ou WhatsApp"><br><br>
+  <button onclick="enviar()">✅ Reservar Números</button>
+  <p id="resposta"></p>
+
+  <script>
+    const grid = document.getElementById("grid");
+    let selecionados = [];
+
+    for (let i = 1; i <= 200; i++) {
+      let n = String(i).padStart(3, '0');
+      let btn = document.createElement("button");
+      btn.innerText = n;
+      btn.className = "btn";
+      btn.onclick = () => {
+        if (btn.classList.contains("ocupado")) return;
+        btn.classList.toggle("selecionado");
+        if (selecionados.includes(n)) {
+          selecionados = selecionados.filter(num => num !== n);
+        } else {
+          selecionados.push(n);
+        }
+      };
+      btn.id = "btn" + n;
+      grid.appendChild(btn);
+    }
+
+    async function enviar() {
+      const nome = document.getElementById("nome").value.trim();
+      const tel = document.getElementById("tel").value.trim();
+      if (!nome || !tel || selecionados.length === 0) {
+        alert("Preencha todos os campos e selecione pelo menos um número.");
+        return;
+      }
+
+      const res = await fetch("https://script.google.com/macros/s/AKfycbygtQS8iAqfWj_zMj4EPxLykTRPZZ0XeRXaJFEvvVKERvblflb__D2fWlqo29TtO0GP9Q/exec", {
