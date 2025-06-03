@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Rifa APECAD 2025</title>
+  <title>🎟️ Rifa APECAD 2025</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
     .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; max-width: 600px; margin: auto; }
@@ -14,7 +14,7 @@
 </head>
 <body>
 
-  <h2>🎟️ Rifa APECAD 2025</h2>
+  <h2>🎟️ <strong>Rifa APECAD 2025</strong></h2>
   <p>Cada número custa <strong>R$ 10,00</strong>. Escolha seus números abaixo:</p>
 
   <div id="grid" class="grid"></div>
@@ -29,6 +29,7 @@
     const grid = document.getElementById("grid");
     let selecionados = [];
 
+    // Cria os botões numerados de 001 a 200
     for (let i = 1; i <= 200; i++) {
       let n = String(i).padStart(3, '0');
       let btn = document.createElement("button");
@@ -56,3 +57,17 @@
       }
 
       const res = await fetch("https://script.google.com/macros/s/AKfycbygtQS8iAqfWj_zMj4EPxLykTRPZZ0XeRXaJFEvvVKERvblflb__D2fWlqo29TtO0GP9Q/exec", {
+        method: "POST",
+        body: JSON.stringify({ nome: nome, telefone: tel, numeros: selecionados }),
+        headers: { "Content-Type": "application/json" }
+      });
+
+      const txt = await res.text();
+      document.getElementById("resposta").innerText = txt === "OK" 
+        ? "✅ Números reservados com sucesso!" 
+        : "❌ Erro: algum número já foi escolhido.";
+    }
+  </script>
+
+</body>
+</html>
