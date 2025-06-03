@@ -29,7 +29,6 @@
     const grid = document.getElementById("grid");
     let selecionados = [];
 
-    // Cria os botões numerados de 001 a 200
     for (let i = 1; i <= 200; i++) {
       let n = String(i).padStart(3, '0');
       let btn = document.createElement("button");
@@ -46,6 +45,22 @@
       };
       btn.id = "btn" + n;
       grid.appendChild(btn);
+    }
+
+    async function carregarOcupados() {
+      const res = await fetch("https://opensheet.elk.sh/1tqeY7nkF_tQfWCpB9hXY-TCSKkAtjBvT-fqHZeu8wU/Página1");
+      const dados = await res.json();
+      dados.forEach(row => {
+        if (row.Números) {
+          row.Números.split(',').map(n => n.trim()).forEach(numero => {
+            let btn = document.getElementById("btn" + numero);
+            if (btn) {
+              btn.classList.add("ocupado");
+              btn.disabled = true;
+            }
+          });
+        }
+      });
     }
 
     async function enviar() {
@@ -66,7 +81,10 @@
       document.getElementById("resposta").innerText = txt === "OK" 
         ? "✅ Números reservados com sucesso!" 
         : "❌ Erro: algum número já foi escolhido.";
+      if (txt === "OK") location.reload();
     }
+
+    carregarOcupados();
   </script>
 
 </body>
