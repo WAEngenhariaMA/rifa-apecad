@@ -3,7 +3,7 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>🎟️ Rifa APECAD 2025</title>
+  <title>🎟️ Rifa APECAD 2025 v1</title>
   <style>
     body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
     .grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 5px; max-width: 600px; margin: auto; }
@@ -52,8 +52,8 @@
       const res = await fetch("https://opensheet.elk.sh/1tqeY7nKhF_tQfWCpB9hXY-TCSKkAtjBvT-fqHZeu8wU/Página1");
       const dados = await res.json();
       dados.forEach(row => {
-        if (row["Números"]) {
-          row["Números"].split(',').map(n => n.trim()).forEach(numero => {
+        if (row.clnnumero) {
+          row.clnnumero.split(',').map(n => n.trim()).forEach(numero => {
             let btn = document.getElementById("btn" + numero);
             if (btn) {
               btn.classList.add("ocupado");
@@ -72,7 +72,7 @@
         return;
       }
 
-      const res = await fetch("https://script.google.com/macros/s/AKfycbyv7-ma6V97EsUlVfhB-0N1dP1Hh9A5cm07ZWHPY_yW2oqzJQ-0BNX1J_lCJXObTUHEeg/exec", {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
         method: "POST",
         body: JSON.stringify({ nome: nome, telefone: tel, numeros: selecionados }),
         headers: { "Content-Type": "application/json" }
