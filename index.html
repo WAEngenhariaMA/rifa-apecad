@@ -59,7 +59,7 @@
     }
 
     #resposta {
-      margin-top: 10px;
+      margin-top: 15px;
       font-weight: bold;
     }
 
@@ -74,11 +74,18 @@
       display: block;
       border-radius: 8px;
     }
+
+    #pixbox {
+      margin-top: 20px;
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      padding: 15px;
+      border-radius: 5px;
+      display: none;
+    }
   </style>
 </head>
 <body>
-
-  <!-- LOGO SUPERIOR -->
   <div class="banner">
     <img src="https://waengenhariama.github.io/rifa-apecad/sup-logo1.png" alt="Banner Topo" />
   </div>
@@ -88,16 +95,22 @@
 
   <div id="grid" class="grid"></div>
 
-  <form action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec" method="POST" target="_blank" onsubmit="formatarNumeros()">
+  <form id="formulario">
     <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required /><br />
-    <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required /><br />
+    <input type="text" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" required maxlength="15" /><br />
     <input type="hidden" name="numeros" id="numeros" />
     <button type="submit">✅ Reservar Números</button>
   </form>
 
+  <div id="pixbox">
+    <p><strong>Valor total:</strong> <span id="valorTotal"></span></p>
+    <p><strong>Pix Copia e Cola:</strong></p>
+    <textarea id="codigoPix" rows="4" style="width:100%;">00020126770014br.gov.bcb.pix0136cb6ebd27-db53-4984-bfb0-19df095564e00215Pix Rifa APECAD5204000053039865802BR5925Weslley Antonelle Fernand6009Sao Paulo62100506APECAD63041DCD</textarea>
+    <button onclick="copiarPix()">📋 Copiar Código Pix</button>
+  </div>
+
   <p id="resposta"></p>
 
-  <!-- LOGO INFERIOR -->
   <div class="banner" style="margin-top: 30px;">
     <img src="https://waengenhariama.github.io/rifa-apecad/infer-logo.png" alt="Banner Inferior" />
   </div>
@@ -105,7 +118,7 @@
   <script>
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
-    const telefoneInput = document.getElementById("tel");
+    const form = document.getElementById("formulario");
     let selecionados = [];
 
     for (let i = 1; i <= 200; i++) {
@@ -133,8 +146,8 @@
       const dados = await res.json();
       dados.forEach(row => {
         if (row.clnnumero) {
-          row.clnnumero.split(',').map(n => n.trim().replace(/^'/, '')).forEach(numero => {
-            let btn = document.getElementById("btn" + numero);
+          row.clnnumero.split(',').map(n => n.trim().replace("'", "")).forEach(numero => {
+            let btn = document.getElementById("btn" + numero.padStart(3, '0'));
             if (btn) {
               btn.classList.add("ocupado");
               btn.disabled = true;
@@ -146,22 +159,30 @@
 
     carregarOcupados();
 
-    // Máscara telefone
-    telefoneInput.addEventListener("input", function (e) {
-      let x = e.target.value.replace(/\D/g, "").substring(0, 11);
-      if (x.length <= 10) {
-        x = x.replace(/^(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
-      } else {
-        x = x.replace(/^(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
-      }
-      e.target.value = x.trim();
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const nome = document.getElementById("nome").value;
+      const telefone = document.getElementById("tel").value;
+      const numeros = campoNumeros.value;
+      const qtd = numeros.split(',').length;
+      const valor = qtd * 10;
+      document.getElementById("valorTotal").innerText = `R$ ${valor},00`;
+      document.getElementById("pixbox").style.display = "block";
+
+      await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
+        method: "POST",
+        body: new FormData(form)
+      });
+
+      document.getElementById("resposta").innerText = "Reserva feita com sucesso! Efetue o pagamento via Pix abaixo.";
     });
 
-    // Reforça envio correto dos números como texto
-    function formatarNumeros() {
-      campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
+    function copiarPix() {
+      const texto = document.getElementById("codigoPix");
+      texto.select();
+      document.execCommand("copy");
+      alert("Código Pix copiado com sucesso!");
     }
   </script>
-
 </body>
 </html>
