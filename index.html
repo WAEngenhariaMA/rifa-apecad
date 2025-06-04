@@ -45,7 +45,7 @@
     input, label {
       padding: 8px;
       margin: 5px;
-      width: 250px;
+      width: 260px;
       display: block;
       margin-left: auto;
       margin-right: auto;
@@ -62,9 +62,8 @@
     }
 
     #resposta {
-      margin-top: 10px;
+      margin-top: 15px;
       font-weight: bold;
-      color: #2e7d32;
     }
 
     .banner {
@@ -79,24 +78,14 @@
       border-radius: 8px;
     }
 
-    #valorTotal {
-      font-size: 16px;
-      font-weight: bold;
-      margin-top: 10px;
-      color: #000;
-    }
-
-    .pix-section {
+    #pixarea {
+      background: #fff3e0;
+      padding: 10px;
       margin-top: 20px;
-      font-size: 14px;
-    }
-
-    .pix-section span {
-      font-weight: bold;
-    }
-
-    input[type="file"] {
-      margin-top: 10px;
+      border-radius: 8px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
     }
   </style>
 </head>
@@ -112,17 +101,17 @@
 
   <div id="grid" class="grid"></div>
 
-  <form id="formRifa">
-    <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required /><br />
-    <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required /><br />
+  <div id="pixarea">
+    <p id="valortotal"><strong>Valor total: R$ 0,00</strong></p>
+    <p>Use o Pix abaixo para pagamento:</p>
+    <p><strong>📱 Pix Copia e Cola:</strong> <br><span>(98) 98709-0307</span></p>
+  </div>
+
+  <form id="formulario">
+    <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required />
+    <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required />
     <input type="file" name="comprovante" id="comprovante" accept="image/*,application/pdf" required />
     <input type="hidden" name="numeros" id="numeros" />
-
-    <div id="valorTotal">Valor total: R$ 0,00</div>
-    <div class="pix-section">
-      Use o <strong>Pix Copia e Cola</strong> ou pague para: <span>(98) 98709-0307</span>
-    </div>
-
     <button type="submit">✅ Reservar Números</button>
   </form>
 
@@ -137,7 +126,8 @@
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
     const telefoneInput = document.getElementById("tel");
-    const valorTotal = document.getElementById("valorTotal");
+    const resposta = document.getElementById("resposta");
+    const valortotal = document.getElementById("valortotal");
     let selecionados = [];
 
     for (let i = 1; i <= 200; i++) {
@@ -155,7 +145,7 @@
           selecionados.push(n);
         }
         campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
-        valorTotal.innerText = `Valor total: R$ ${(selecionados.length * 10).toFixed(2)}`;
+        valortotal.innerHTML = `<strong>Valor total: R$ ${selecionados.length * 10},00</strong>`;
       };
       btn.id = "btn" + n;
       grid.appendChild(btn);
@@ -189,16 +179,16 @@
       e.target.value = x.trim();
     });
 
-    document.getElementById("formRifa").addEventListener("submit", async function (e) {
+    document.getElementById("formulario").addEventListener("submit", async function (e) {
       e.preventDefault();
-      const form = e.target;
-      const nome = form.nome.value.trim();
-      const telefone = form.telefone.value.trim();
-      const numeros = campoNumeros.value.trim();
-      const file = form.comprovante.files[0];
 
-      if (!nome || !telefone || !numeros || !file) {
-        alert("Preencha todos os campos e envie o comprovante.");
+      const nome = document.getElementById("nome").value;
+      const telefone = document.getElementById("tel").value;
+      const numeros = campoNumeros.value;
+      const comprovante = document.getElementById("comprovante").files[0];
+
+      if (!comprovante) {
+        resposta.innerText = "Por favor, anexe o comprovante.";
         return;
       }
 
@@ -206,18 +196,21 @@
       formData.append("nome", nome);
       formData.append("telefone", telefone);
       formData.append("numeros", numeros);
-      formData.append("comprovante", file);
+      formData.append("comprovante", comprovante);
 
-      const resposta = document.getElementById("resposta");
-      resposta.innerText = "Enviando... Aguarde.";
-
-      const req = await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
-        method: "POST",
-        body: formData
-      });
-
-      const txt = await req.text();
-      resposta.innerText = txt;
+      try {
+        const res = await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
+          method: "POST",
+          body: formData
+        });
+        const msg = await res.text();
+        resposta.innerText = msg;
+        if (msg.includes("sucesso")) {
+          window.location.reload();
+        }
+      } catch (err) {
+        resposta.innerText = "Erro ao enviar. Tente novamente.";
+      }
     });
   </script>
 
