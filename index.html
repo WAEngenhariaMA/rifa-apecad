@@ -42,13 +42,15 @@
       cursor: not-allowed;
     }
 
-    input, label {
+    .pago {
+      background: green !important;
+      cursor: not-allowed;
+    }
+
+    input {
       padding: 8px;
       margin: 5px;
       width: 250px;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
     }
 
     button[type="submit"] {
@@ -77,20 +79,11 @@
       display: block;
       border-radius: 8px;
     }
-
-    .valor-total {
-      font-size: 18px;
-      font-weight: bold;
-      margin-top: 15px;
-    }
-
-    .pix-info {
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
 
+  <!-- LOGO SUPERIOR -->
   <div class="banner">
     <img src="https://waengenhariama.github.io/rifa-apecad/sup-logo1.png" alt="Banner Topo" />
   </div>
@@ -100,28 +93,19 @@
 
   <div id="grid" class="grid"></div>
 
-  <div class="valor-total" id="valortotal">Valor total: R$ 0,00</div>
-  <div class="pix-info">
-    <p><strong>Pix:</strong> (98) 98709-0307</p>
-    <p><strong>Após o pagamento, envie o comprovante abaixo:</strong></p>
-  </div>
-
-  <form 
-    action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec"
-    method="POST"
-    enctype="multipart/form-data"
-    target="_blank"
-    onsubmit="return formatarNumeros();"
-  >
-    <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required />
-    <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required />
+  <form action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec"
+        method="POST"
+        target="_blank"
+        onsubmit="formatarNumeros()">
+    <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required /><br />
+    <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required /><br />
     <input type="hidden" name="numeros" id="numeros" />
-    <input type="file" name="comprovante" id="comprovante" accept="image/*,application/pdf" required />
     <button type="submit">✅ Reservar Números</button>
   </form>
 
   <p id="resposta"></p>
 
+  <!-- LOGO INFERIOR -->
   <div class="banner" style="margin-top: 30px;">
     <img src="https://waengenhariama.github.io/rifa-apecad/infer-logo.png" alt="Banner Inferior" />
   </div>
@@ -130,7 +114,6 @@
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
     const telefoneInput = document.getElementById("tel");
-    const valorTotal = document.getElementById("valortotal");
     let selecionados = [];
 
     for (let i = 1; i <= 200; i++) {
@@ -140,14 +123,14 @@
       btn.className = "btn";
       btn.type = "button";
       btn.onclick = () => {
-        if (btn.classList.contains("ocupado")) return;
+        if (btn.classList.contains("ocupado") || btn.classList.contains("pago")) return;
         btn.classList.toggle("selecionado");
         if (selecionados.includes(n)) {
           selecionados = selecionados.filter(num => num !== n);
         } else {
           selecionados.push(n);
         }
-        atualizarNumeros();
+        campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
       };
       btn.id = "btn" + n;
       grid.appendChild(btn);
@@ -158,10 +141,11 @@
       const dados = await res.json();
       dados.forEach(row => {
         if (row.clnnumero) {
+          let status = row.clnpago?.trim().toLowerCase() === "ok" ? "pago" : "ocupado";
           row.clnnumero.split(',').map(n => n.trim().replace(/^'/, '')).forEach(numero => {
             let btn = document.getElementById("btn" + numero);
             if (btn) {
-              btn.classList.add("ocupado");
+              btn.classList.add(status);
               btn.disabled = true;
             }
           });
@@ -171,6 +155,7 @@
 
     carregarOcupados();
 
+    // Máscara telefone
     telefoneInput.addEventListener("input", function (e) {
       let x = e.target.value.replace(/\D/g, "").substring(0, 11);
       if (x.length <= 10) {
@@ -181,18 +166,9 @@
       e.target.value = x.trim();
     });
 
-    function atualizarNumeros() {
-      campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
-      valorTotal.innerText = `Valor total: R$ ${(selecionados.length * 10).toFixed(2).replace('.', ',')}`;
-    }
-
+    // Reforça envio correto dos números como texto
     function formatarNumeros() {
-      if (selecionados.length === 0) {
-        alert("Escolha pelo menos um número.");
-        return false;
-      }
-      atualizarNumeros();
-      return true;
+      campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
     }
   </script>
 
