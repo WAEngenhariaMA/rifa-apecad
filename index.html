@@ -59,8 +59,16 @@
     }
 
     #resposta {
-      margin-top: 10px;
-      font-weight: bold;
+      margin-top: 20px;
+      padding: 15px;
+      background: #e6ffe6;
+      border: 1px solid #8bc34a;
+      color: #2e7d32;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+      border-radius: 8px;
+      font-size: 16px;
     }
 
     .banner {
@@ -112,7 +120,7 @@
     <button type="submit">✅ Reservar Números</button>
   </form>
 
-  <p id="resposta"></p>
+  <div id="resposta"></div>
 
   <!-- LOGO INFERIOR -->
   <div class="banner" style="margin-top: 30px;">
@@ -126,6 +134,7 @@
     const valorTexto = document.getElementById("valorTexto");
     const telefoneInput = document.getElementById("tel");
     const infoPagamento = document.getElementById("infoPagamento");
+    const resposta = document.getElementById("resposta");
     let selecionados = [];
 
     for (let i = 1; i <= 200; i++) {
@@ -174,7 +183,6 @@
 
     carregarOcupados();
 
-    // Máscara telefone
     telefoneInput.addEventListener("input", function (e) {
       let x = e.target.value.replace(/\D/g, "").substring(0, 11);
       if (x.length <= 10) {
@@ -190,7 +198,21 @@
         alert("Selecione pelo menos um número antes de enviar.");
         return false;
       }
+
       atualizarCampos();
+      const nome = document.getElementById("nome").value;
+      const quantidade = selecionados.length;
+      const valorTotal = quantidade * 10;
+
+      resposta.innerHTML = `
+        ✅ <strong>Reserva feita com sucesso!</strong><br />
+        👤 Nome: <strong>${nome}</strong><br />
+        🔢 Quantidade de números: <strong>${quantidade}</strong><br />
+        💰 Valor total: <strong>R$ ${valorTotal},00</strong><br />
+        📲 Faça o Pix para: <strong>(98) 98709-0307</strong><br />
+        Após o pagamento, envie o comprovante para confirmação da reserva.
+      `;
+
       return true;
     }
   </script>
