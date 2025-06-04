@@ -46,6 +46,9 @@
       padding: 8px;
       margin: 5px;
       width: 250px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 14px;
     }
 
     button[type="submit"] {
@@ -105,8 +108,11 @@
   <script>
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
+    const tel = document.getElementById("tel");
+    const nome = document.getElementById("nome");
     let selecionados = [];
 
+    // Criação dos botões de 001 a 200
     for (let i = 1; i <= 200; i++) {
       let n = String(i).padStart(3, '0');
       let btn = document.createElement("button");
@@ -127,6 +133,7 @@
       grid.appendChild(btn);
     }
 
+    // Marcar ocupados automaticamente
     async function carregarOcupados() {
       const res = await fetch("https://opensheet.elk.sh/1tqeY7nKhF_tQfWCpB9hXY-TCSKkAtjBvT-fqHZeu8wU/Página1");
       const dados = await res.json();
@@ -144,6 +151,19 @@
     }
 
     carregarOcupados();
+
+    // Máscara para telefone (formato (99) 99999-9999)
+    tel.addEventListener("input", () => {
+      let v = tel.value.replace(/\D/g, "");
+      v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
+      v = v.replace(/(\d{5})(\d)/, "$1-$2");
+      tel.value = v;
+    });
+
+    // Limitar campo nome a texto apenas (letras e espaço)
+    nome.addEventListener("input", () => {
+      nome.value = nome.value.replace(/[^A-Za-zÀ-ÿ\s]/g, "");
+    });
   </script>
 
 </body>
