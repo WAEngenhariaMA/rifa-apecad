@@ -42,18 +42,17 @@
       cursor: not-allowed;
     }
 
-    .pago {
-      background: #4caf50 !important;
-      color: white;
-    }
-
-    input, button, textarea {
+    input, label {
       padding: 8px;
       margin: 5px;
       width: 250px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     button[type="submit"] {
+      margin-top: 10px;
       background: #388e3c;
       color: white;
       border: none;
@@ -78,9 +77,20 @@
       display: block;
       border-radius: 8px;
     }
+
+    .valor-total {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .pix-info {
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
+
   <div class="banner">
     <img src="https://waengenhariama.github.io/rifa-apecad/sup-logo1.png" alt="Banner Topo" />
   </div>
@@ -90,11 +100,23 @@
 
   <div id="grid" class="grid"></div>
 
-  <form id="formulario">
-    <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required /><br />
-    <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required /><br />
-    <input type="file" name="comprovante" id="comprovante" accept="image/*" required /><br />
+  <div class="valor-total" id="valortotal">Valor total: R$ 0,00</div>
+  <div class="pix-info">
+    <p><strong>Pix:</strong> (98) 98709-0307</p>
+    <p><strong>Após o pagamento, envie o comprovante abaixo:</strong></p>
+  </div>
+
+  <form 
+    action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec"
+    method="POST"
+    enctype="multipart/form-data"
+    target="_blank"
+    onsubmit="return formatarNumeros();"
+  >
+    <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required />
+    <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required />
     <input type="hidden" name="numeros" id="numeros" />
+    <input type="file" name="comprovante" id="comprovante" accept="image/*,application/pdf" required />
     <button type="submit">✅ Reservar Números</button>
   </form>
 
@@ -108,8 +130,7 @@
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
     const telefoneInput = document.getElementById("tel");
-    const form = document.getElementById("formulario");
-    const resposta = document.getElementById("resposta");
+    const valorTotal = document.getElementById("valortotal");
     let selecionados = [];
 
     for (let i = 1; i <= 200; i++) {
@@ -119,14 +140,14 @@
       btn.className = "btn";
       btn.type = "button";
       btn.onclick = () => {
-        if (btn.classList.contains("ocupado") || btn.classList.contains("pago")) return;
+        if (btn.classList.contains("ocupado")) return;
         btn.classList.toggle("selecionado");
         if (selecionados.includes(n)) {
           selecionados = selecionados.filter(num => num !== n);
         } else {
           selecionados.push(n);
         }
-        campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
+        atualizarNumeros();
       };
       btn.id = "btn" + n;
       grid.appendChild(btn);
@@ -136,17 +157,9 @@
       const res = await fetch("https://opensheet.elk.sh/1tqeY7nKhF_tQfWCpB9hXY-TCSKkAtjBvT-fqHZeu8wU/Página1");
       const dados = await res.json();
       dados.forEach(row => {
-        if (row.clnnumero && row.clnpago) {
+        if (row.clnnumero) {
           row.clnnumero.split(',').map(n => n.trim().replace(/^'/, '')).forEach(numero => {
-            const btn = document.getElementById("btn" + numero);
-            if (btn) {
-              btn.classList.add("pago");
-              btn.disabled = true;
-            }
-          });
-        } else if (row.clnnumero) {
-          row.clnnumero.split(',').map(n => n.trim().replace(/^'/, '')).forEach(numero => {
-            const btn = document.getElementById("btn" + numero);
+            let btn = document.getElementById("btn" + numero);
             if (btn) {
               btn.classList.add("ocupado");
               btn.disabled = true;
@@ -168,22 +181,20 @@
       e.target.value = x.trim();
     });
 
-    form.addEventListener("submit", async function (e) {
-      e.preventDefault();
-      const formData = new FormData(form);
-      formData.set("numeros", campoNumeros.value);
+    function atualizarNumeros() {
+      campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
+      valorTotal.innerText = `Valor total: R$ ${(selecionados.length * 10).toFixed(2).replace('.', ',')}`;
+    }
 
-      const res = await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
-        method: "POST",
-        body: formData
-      });
-
-      const txt = await res.text();
-      resposta.innerText = txt;
-      if (txt.includes("sucesso")) {
-        setTimeout(() => window.location.reload(), 3000);
+    function formatarNumeros() {
+      if (selecionados.length === 0) {
+        alert("Escolha pelo menos um número.");
+        return false;
       }
-    });
+      atualizarNumeros();
+      return true;
+    }
   </script>
+
 </body>
 </html>
