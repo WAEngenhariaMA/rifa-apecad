@@ -42,13 +42,19 @@
       cursor: not-allowed;
     }
 
+    .pago {
+      background: #4caf50 !important;
+      color: white;
+      cursor: not-allowed;
+    }
+
     input {
       padding: 8px;
       margin: 5px;
       width: 250px;
     }
 
-    button[type="submit"], button.enviar {
+    button.enviar {
       margin-top: 10px;
       background: #388e3c;
       color: white;
@@ -142,7 +148,7 @@
       btn.className = "btn";
       btn.type = "button";
       btn.onclick = () => {
-        if (btn.classList.contains("ocupado")) return;
+        if (btn.classList.contains("ocupado") || btn.classList.contains("pago")) return;
         btn.classList.toggle("selecionado");
         if (selecionados.includes(n)) {
           selecionados = selecionados.filter(num => num !== n);
@@ -164,12 +170,20 @@
     async function carregarOcupados() {
       const res = await fetch("https://opensheet.elk.sh/1tqeY7nKhF_tQfWCpB9hXY-TCSKkAtjBvT-fqHZeu8wU/Página1");
       const dados = await res.json();
+      
       dados.forEach(row => {
         if (row.clnnumero) {
-          row.clnnumero.split(',').map(n => n.trim().replace(/^'/, '')).forEach(numero => {
-            let btn = document.getElementById("btn" + numero);
+          const numeros = row.clnnumero.split(',').map(n => n.trim().replace(/^'/, ''));
+          const pago = row.clnpago && row.clnpago.trim().toLowerCase() === "sim";
+
+          numeros.forEach(numero => {
+            const btn = document.getElementById("btn" + numero);
             if (btn) {
-              btn.classList.add("ocupado");
+              if (pago) {
+                btn.classList.add("pago");
+              } else {
+                btn.classList.add("ocupado");
+              }
               btn.disabled = true;
             }
           });
