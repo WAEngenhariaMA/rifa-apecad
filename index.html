@@ -74,6 +74,16 @@
       display: block;
       border-radius: 8px;
     }
+
+    .info-pagamento {
+      margin: 15px auto;
+      padding: 10px;
+      background: #fff3cd;
+      border: 1px solid #ffeeba;
+      color: #856404;
+      max-width: 600px;
+      border-radius: 6px;
+    }
   </style>
 </head>
 <body>
@@ -87,6 +97,12 @@
   <p>Cada número custa <strong>R$ 10,00</strong>. Escolha seus números abaixo:</p>
 
   <div id="grid" class="grid"></div>
+
+  <!-- PIX + VALOR -->
+  <div class="info-pagamento" id="infoPagamento" style="display:none;">
+    <div><strong>Valor total:</strong> <span id="valorTexto">R$ 0,00</span></div>
+    <div style="margin-top: 6px;">Use o Pix <strong>(98) 98709-0307</strong> para pagamento</div>
+  </div>
 
   <form action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec" method="POST" target="_blank" onsubmit="return validarFormulario()">
     <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required /><br />
@@ -107,7 +123,9 @@
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
     const campoValor = document.getElementById("valor");
+    const valorTexto = document.getElementById("valorTexto");
     const telefoneInput = document.getElementById("tel");
+    const infoPagamento = document.getElementById("infoPagamento");
     let selecionados = [];
 
     for (let i = 1; i <= 200; i++) {
@@ -132,7 +150,10 @@
 
     function atualizarCampos() {
       campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
-      campoValor.value = `R$ ${selecionados.length * 10},00`;
+      let valorFinal = selecionados.length * 10;
+      campoValor.value = `R$ ${valorFinal},00`;
+      valorTexto.innerText = `R$ ${valorFinal},00`;
+      infoPagamento.style.display = selecionados.length > 0 ? "block" : "none";
     }
 
     async function carregarOcupados() {
