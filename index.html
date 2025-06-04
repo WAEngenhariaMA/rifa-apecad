@@ -20,8 +20,7 @@
     }
 
     .btn {
-      padding: 8px;
-      font-size: 14px;
+      padding: 10px;
       background: #ff9800;
       color: white;
       border: none;
@@ -45,16 +44,16 @@
 
     .pago {
       background: #4CAF50 !important;
-      cursor: default;
     }
 
-    input, button, label {
+    input, input[type="file"] {
       padding: 8px;
       margin: 5px;
       width: 250px;
     }
 
     button[type="submit"] {
+      margin-top: 10px;
       background: #388e3c;
       color: white;
       border: none;
@@ -93,10 +92,10 @@
 
   <div id="grid" class="grid"></div>
 
-  <form id="formulario">
+  <form id="reservaForm">
     <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required /><br />
     <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required /><br />
-    <input type="file" id="comprovante" accept="image/*,.pdf" required /><br />
+    <input type="file" name="comprovante" id="comprovante" accept="image/*,application/pdf" required><br />
     <input type="hidden" name="numeros" id="numeros" />
     <button type="submit">✅ Reservar Números</button>
   </form>
@@ -112,6 +111,8 @@
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
     const telefoneInput = document.getElementById("tel");
+    const form = document.getElementById("reservaForm");
+    const resposta = document.getElementById("resposta");
     let selecionados = [];
 
     for (let i = 1; i <= 200; i++) {
@@ -138,11 +139,16 @@
       const res = await fetch("https://opensheet.elk.sh/1tqeY7nKhF_tQfWCpB9hXY-TCSKkAtjBvT-fqHZeu8wU/Página1");
       const dados = await res.json();
       dados.forEach(row => {
-        if (row.clnnumero && row.clnpago === "ok") {
+        if (row.clnnumero) {
+          const pago = row.clnpago && row.clnpago.toLowerCase() === "ok";
           row.clnnumero.split(',').map(n => n.trim().replace(/^'/, '')).forEach(numero => {
             let btn = document.getElementById("btn" + numero);
             if (btn) {
-              btn.classList.add("ocupado", "pago");
+              if (pago) {
+                btn.classList.add("pago");
+              } else {
+                btn.classList.add("ocupado");
+              }
               btn.disabled = true;
             }
           });
@@ -162,58 +168,65 @@
       e.target.value = x.trim();
     });
 
-    document.getElementById("formulario").addEventListener("submit", async function (e) {
+    function formatarNumeros() {
+      campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
+    }
+
+    form.addEventListener("submit", async function (e) {
       e.preventDefault();
+
+      formatarNumeros();
 
       const nome = document.getElementById("nome").value.trim();
       const telefone = document.getElementById("tel").value.trim();
       const numeros = campoNumeros.value;
       const arquivo = document.getElementById("comprovante").files[0];
 
-      if (!arquivo) {
-        document.getElementById("resposta").innerText = "Envie o comprovante de pagamento.";
+      if (!nome || !telefone || !numeros || !arquivo) {
+        resposta.innerText = "Preencha todos os campos e anexe o comprovante.";
         return;
       }
 
       const reader = new FileReader();
       reader.onload = async function () {
-        const base64 = reader.result.split(',')[1];
-        const payload = {
-          nome,
-          telefone,
-          numeros,
-          filename: arquivo.name,
-          filetype: arquivo.type,
-          base64
+        const base64 = reader.result.split(",")[1];
+
+        const data = {
+          nome: nome,
+          telefone: telefone,
+          numeros: numeros,
+          comprovante: base64,
+          nomeArquivo: arquivo.name
         };
 
-        const resposta = await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
-          method: "POST",
-          body: JSON.stringify(payload),
-          headers: { "Content-Type": "application/json" }
-        });
-
-        const texto = await resposta.text();
-        document.getElementById("resposta").innerText = texto;
-
-        if (texto.includes("sucesso")) {
-          selecionados.forEach(num => {
-            const btn = document.getElementById("btn" + num.replace(/^'/, ''));
-            if (btn) {
-              btn.classList.remove("selecionado");
-              btn.classList.add("ocupado", "pago");
-              btn.disabled = true;
+        try {
+          const res = await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
+            method: "POST",
+            body: JSON.stringify(data),
+            headers: {
+              "Content-Type": "application/json"
             }
           });
-          selecionados = [];
-          campoNumeros.value = "";
-          document.getElementById("formulario").reset();
+
+          const respostaTxt = await res.text();
+          resposta.innerText = respostaTxt;
+          if (respostaTxt.includes("sucesso")) {
+            selecionados.forEach(n => {
+              let b = document.getElementById("btn" + n);
+              if (b) {
+                b.classList.remove("selecionado");
+                b.classList.add("pago");
+                b.disabled = true;
+              }
+            });
+            selecionados = [];
+          }
+        } catch (err) {
+          resposta.innerText = "Erro ao enviar dados.";
         }
       };
-
       reader.readAsDataURL(arquivo);
     });
   </script>
-
 </body>
 </html>
