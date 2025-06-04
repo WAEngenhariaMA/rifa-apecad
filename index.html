@@ -42,24 +42,22 @@
       cursor: not-allowed;
     }
 
-    input {
-      padding: 8px;
+    input, button {
+      padding: 10px;
       margin: 5px;
-      width: 250px;
+      width: 260px;
     }
 
     button[type="submit"] {
-      margin-top: 10px;
       background: #388e3c;
       color: white;
       border: none;
-      padding: 10px 20px;
       border-radius: 5px;
       cursor: pointer;
     }
 
-    #resposta {
-      margin-top: 10px;
+    #resposta, #valorTotal {
+      margin-top: 15px;
       font-weight: bold;
     }
 
@@ -75,24 +73,15 @@
       border-radius: 8px;
     }
 
-    #pixInfo {
-      background: #fff3cd;
-      border: 1px solid #ffeeba;
-      padding: 10px;
-      margin: 20px auto;
-      width: 90%;
-      max-width: 500px;
-      display: none;
-    }
-
-    #pixInfo textarea {
-      width: 100%;
-      height: 80px;
+    #pix {
+      margin-top: 20px;
+      font-size: 16px;
     }
   </style>
 </head>
 <body>
 
+  <!-- LOGO SUPERIOR -->
   <div class="banner">
     <img src="https://waengenhariama.github.io/rifa-apecad/sup-logo1.png" alt="Banner Topo" />
   </div>
@@ -102,19 +91,24 @@
 
   <div id="grid" class="grid"></div>
 
-  <form onsubmit="mostrarPix(); return false;">
+  <form id="formulario" enctype="multipart/form-data">
     <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required /><br />
-    <input type="text" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" required /><br />
+    <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required /><br />
+    <input type="file" name="comprovante" id="comprovante" accept="image/*,application/pdf" required /><br />
     <input type="hidden" name="numeros" id="numeros" />
-    <button type="submit">✅ Reservar Números</button>
+
+    <p id="valorTotal">Valor total: R$ 0,00</p>
+    <div id="pix">
+      Use o Pix: <strong>(98) 98709-0307</strong><br/>
+      Após pagar, envie o comprovante abaixo para confirmar sua reserva.
+    </div>
+
+    <button type="submit">📤 Confirmar Pagamento</button>
   </form>
 
-  <div id="pixInfo">
-    <p><strong>Valor total:</strong> <span id="valorTotal"></span></p>
-    <p>Use o código Pix Copia e Cola abaixo para pagamento:</p>
-    <textarea readonly id="pixCodigo"></textarea>
-  </div>
+  <p id="resposta"></p>
 
+  <!-- LOGO INFERIOR -->
   <div class="banner" style="margin-top: 30px;">
     <img src="https://waengenhariama.github.io/rifa-apecad/infer-logo.png" alt="Banner Inferior" />
   </div>
@@ -122,17 +116,12 @@
   <script>
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
-    const tel = document.getElementById("tel");
-    let selecionados = [];
+    const telefoneInput = document.getElementById("tel");
+    const valorTotal = document.getElementById("valorTotal");
+    const resposta = document.getElementById("resposta");
+    const form = document.getElementById("formulario");
 
-    // Máscara telefone
-    tel.addEventListener('input', (e) => {
-      e.target.value = e.target.value
-        .replace(/\D/g, '')
-        .replace(/^(.{2})(\d)/, '($1) $2')
-        .replace(/(\d{5})(\d)/, '$1-$2')
-        .slice(0, 15);
-    });
+    let selecionados = [];
 
     for (let i = 1; i <= 200; i++) {
       let n = String(i).padStart(3, '0');
@@ -148,10 +137,15 @@
         } else {
           selecionados.push(n);
         }
-        campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
+        atualizarNumeros();
       };
       btn.id = "btn" + n;
       grid.appendChild(btn);
+    }
+
+    function atualizarNumeros() {
+      campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
+      valorTotal.innerText = `Valor total: R$ ${selecionados.length * 10},00`;
     }
 
     async function carregarOcupados() {
@@ -159,8 +153,8 @@
       const dados = await res.json();
       dados.forEach(row => {
         if (row.clnnumero) {
-          row.clnnumero.split(',').map(n => n.trim().replace("'", "")).forEach(numero => {
-            let btn = document.getElementById("btn" + numero.padStart(3, '0'));
+          row.clnnumero.split(',').map(n => n.trim().replace(/^'/, '')).forEach(numero => {
+            let btn = document.getElementById("btn" + numero);
             if (btn) {
               btn.classList.add("ocupado");
               btn.disabled = true;
@@ -172,15 +166,44 @@
 
     carregarOcupados();
 
-    function mostrarPix() {
-      const qtde = selecionados.length;
-      if (qtde === 0) return alert("Escolha ao menos um número");
+    telefoneInput.addEventListener("input", function (e) {
+      let x = e.target.value.replace(/\D/g, "").substring(0, 11);
+      if (x.length <= 10) {
+        x = x.replace(/^(\d{2})(\d{4})(\d{0,4})/, "($1) $2-$3");
+      } else {
+        x = x.replace(/^(\d{2})(\d{5})(\d{0,4})/, "($1) $2-$3");
+      }
+      e.target.value = x.trim();
+    });
 
-      const valor = qtde * 10;
-      document.getElementById("valorTotal").innerText = `R$ ${valor},00`;
-      document.getElementById("pixCodigo").value = `00020126770014br.gov.bcb.pix0136cb6ebd27-db53-4984-bfb0-19df095564e00215Pix Rifa APECAD5204000053039865802BR5925Weslley Antonelle Fernand6009Sao Paulo62100506APECAD63041DCD`;
-      document.getElementById("pixInfo").style.display = 'block';
-    }
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      if (selecionados.length === 0) {
+        alert("Selecione pelo menos um número.");
+        return;
+      }
+
+      const nome = document.getElementById("nome").value;
+      const telefone = document.getElementById("tel").value;
+      const comprovante = document.getElementById("comprovante").files[0];
+      const numeros = campoNumeros.value;
+
+      const formData = new FormData();
+      formData.append("nome", nome);
+      formData.append("telefone", telefone);
+      formData.append("numeros", numeros);
+      formData.append("comprovante", comprovante);
+
+      resposta.innerText = "Enviando... aguarde.";
+
+      const res = await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
+        method: "POST",
+        body: formData,
+      });
+
+      const txt = await res.text();
+      resposta.innerText = txt.includes("sucesso") ? "✅ Pagamento enviado com sucesso!" : `❌ ${txt}`;
+    });
   </script>
 
 </body>
