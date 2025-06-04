@@ -42,11 +42,6 @@
       cursor: not-allowed;
     }
 
-    .pago {
-      background: green !important;
-      cursor: not-allowed;
-    }
-
     input {
       padding: 8px;
       margin: 5px;
@@ -93,13 +88,11 @@
 
   <div id="grid" class="grid"></div>
 
-  <form action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec"
-        method="POST"
-        target="_blank"
-        onsubmit="formatarNumeros()">
+  <form action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec" method="POST" target="_blank" onsubmit="return validarFormulario()">
     <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required /><br />
     <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required /><br />
     <input type="hidden" name="numeros" id="numeros" />
+    <input type="hidden" name="valor" id="valor" />
     <button type="submit">✅ Reservar Números</button>
   </form>
 
@@ -113,6 +106,7 @@
   <script>
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
+    const campoValor = document.getElementById("valor");
     const telefoneInput = document.getElementById("tel");
     let selecionados = [];
 
@@ -123,17 +117,22 @@
       btn.className = "btn";
       btn.type = "button";
       btn.onclick = () => {
-        if (btn.classList.contains("ocupado") || btn.classList.contains("pago")) return;
+        if (btn.classList.contains("ocupado")) return;
         btn.classList.toggle("selecionado");
         if (selecionados.includes(n)) {
           selecionados = selecionados.filter(num => num !== n);
         } else {
           selecionados.push(n);
         }
-        campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
+        atualizarCampos();
       };
       btn.id = "btn" + n;
       grid.appendChild(btn);
+    }
+
+    function atualizarCampos() {
+      campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
+      campoValor.value = `R$ ${selecionados.length * 10},00`;
     }
 
     async function carregarOcupados() {
@@ -141,11 +140,10 @@
       const dados = await res.json();
       dados.forEach(row => {
         if (row.clnnumero) {
-          let status = row.clnpago?.trim().toLowerCase() === "ok" ? "pago" : "ocupado";
           row.clnnumero.split(',').map(n => n.trim().replace(/^'/, '')).forEach(numero => {
             let btn = document.getElementById("btn" + numero);
             if (btn) {
-              btn.classList.add(status);
+              btn.classList.add("ocupado");
               btn.disabled = true;
             }
           });
@@ -166,9 +164,13 @@
       e.target.value = x.trim();
     });
 
-    // Reforça envio correto dos números como texto
-    function formatarNumeros() {
-      campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
+    function validarFormulario() {
+      if (selecionados.length === 0) {
+        alert("Selecione pelo menos um número antes de enviar.");
+        return false;
+      }
+      atualizarCampos();
+      return true;
     }
   </script>
 
