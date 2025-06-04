@@ -93,7 +93,7 @@
 
   <form action="https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec" method="POST" target="_blank">
     <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required /><br />
-    <input type="text" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" required /><br />
+    <input type="text" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" required maxlength="15" /><br />
     <input type="hidden" name="numeros" id="numeros" />
     <button type="submit">✅ Reservar Números</button>
   </form>
@@ -112,7 +112,6 @@
     const nome = document.getElementById("nome");
     let selecionados = [];
 
-    // Criação dos botões de 001 a 200
     for (let i = 1; i <= 200; i++) {
       let n = String(i).padStart(3, '0');
       let btn = document.createElement("button");
@@ -127,19 +126,18 @@
         } else {
           selecionados.push(n);
         }
-        campoNumeros.value = selecionados.join(",");
+        campoNumeros.value = '"' + selecionados.join('","') + '"';
       };
       btn.id = "btn" + n;
       grid.appendChild(btn);
     }
 
-    // Marcar ocupados automaticamente
     async function carregarOcupados() {
       const res = await fetch("https://opensheet.elk.sh/1tqeY7nKhF_tQfWCpB9hXY-TCSKkAtjBvT-fqHZeu8wU/Página1");
       const dados = await res.json();
       dados.forEach(row => {
         if (row.clnnumero) {
-          row.clnnumero.split(',').map(n => n.trim()).forEach(numero => {
+          row.clnnumero.split(',').map(n => n.trim().padStart(3, '0')).forEach(numero => {
             let btn = document.getElementById("btn" + numero);
             if (btn) {
               btn.classList.add("ocupado");
@@ -152,15 +150,14 @@
 
     carregarOcupados();
 
-    // Máscara para telefone (formato (99) 99999-9999)
     tel.addEventListener("input", () => {
       let v = tel.value.replace(/\D/g, "");
-      v = v.replace(/^(\d{2})(\d)/g, "($1) $2");
-      v = v.replace(/(\d{5})(\d)/, "$1-$2");
+      v = v.substring(0, 11);
+      v = v.replace(/^([0-9]{2})([0-9])/, "($1) $2");
+      v = v.replace(/(\d{5})(\d{1,4})$/, "$1-$2");
       tel.value = v;
     });
 
-    // Limitar campo nome a texto apenas (letras e espaço)
     nome.addEventListener("input", () => {
       nome.value = nome.value.replace(/[^A-Za-zÀ-ÿ\s]/g, "");
     });
