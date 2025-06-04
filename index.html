@@ -42,17 +42,18 @@
       cursor: not-allowed;
     }
 
-    input, label {
+    .pago {
+      background: #4CAF50 !important;
+      cursor: default;
+    }
+
+    input, button, label {
       padding: 8px;
       margin: 5px;
-      width: 260px;
-      display: block;
-      margin-left: auto;
-      margin-right: auto;
+      width: 250px;
     }
 
     button[type="submit"] {
-      margin-top: 10px;
       background: #388e3c;
       color: white;
       border: none;
@@ -62,7 +63,7 @@
     }
 
     #resposta {
-      margin-top: 15px;
+      margin-top: 10px;
       font-weight: bold;
     }
 
@@ -76,16 +77,6 @@
       height: auto;
       display: block;
       border-radius: 8px;
-    }
-
-    #pixarea {
-      background: #fff3e0;
-      padding: 10px;
-      margin-top: 20px;
-      border-radius: 8px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
     }
   </style>
 </head>
@@ -101,16 +92,10 @@
 
   <div id="grid" class="grid"></div>
 
-  <div id="pixarea">
-    <p id="valortotal"><strong>Valor total: R$ 0,00</strong></p>
-    <p>Use o Pix abaixo para pagamento:</p>
-    <p><strong>📱 Pix Copia e Cola:</strong> <br><span>(98) 98709-0307</span></p>
-  </div>
-
   <form id="formulario">
-    <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required />
-    <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required />
-    <input type="file" name="comprovante" id="comprovante" accept="image/*,application/pdf" required />
+    <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required /><br />
+    <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required /><br />
+    <input type="file" id="comprovante" accept="image/*,.pdf" required /><br />
     <input type="hidden" name="numeros" id="numeros" />
     <button type="submit">✅ Reservar Números</button>
   </form>
@@ -126,8 +111,6 @@
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
     const telefoneInput = document.getElementById("tel");
-    const resposta = document.getElementById("resposta");
-    const valortotal = document.getElementById("valortotal");
     let selecionados = [];
 
     for (let i = 1; i <= 200; i++) {
@@ -137,7 +120,7 @@
       btn.className = "btn";
       btn.type = "button";
       btn.onclick = () => {
-        if (btn.classList.contains("ocupado")) return;
+        if (btn.classList.contains("ocupado") || btn.classList.contains("pago")) return;
         btn.classList.toggle("selecionado");
         if (selecionados.includes(n)) {
           selecionados = selecionados.filter(num => num !== n);
@@ -145,7 +128,6 @@
           selecionados.push(n);
         }
         campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
-        valortotal.innerHTML = `<strong>Valor total: R$ ${selecionados.length * 10},00</strong>`;
       };
       btn.id = "btn" + n;
       grid.appendChild(btn);
@@ -155,11 +137,11 @@
       const res = await fetch("https://opensheet.elk.sh/1tqeY7nKhF_tQfWCpB9hXY-TCSKkAtjBvT-fqHZeu8wU/Página1");
       const dados = await res.json();
       dados.forEach(row => {
-        if (row.clnnumero) {
+        if (row.clnnumero && row.clnpago === "ok") {
           row.clnnumero.split(',').map(n => n.trim().replace(/^'/, '')).forEach(numero => {
             let btn = document.getElementById("btn" + numero);
             if (btn) {
-              btn.classList.add("ocupado");
+              btn.classList.add("ocupado", "pago");
               btn.disabled = true;
             }
           });
@@ -169,6 +151,7 @@
 
     carregarOcupados();
 
+    // Máscara telefone
     telefoneInput.addEventListener("input", function (e) {
       let x = e.target.value.replace(/\D/g, "").substring(0, 11);
       if (x.length <= 10) {
@@ -179,38 +162,57 @@
       e.target.value = x.trim();
     });
 
+    // Envio do formulário com comprovante em base64
     document.getElementById("formulario").addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const nome = document.getElementById("nome").value;
-      const telefone = document.getElementById("tel").value;
+      const nome = document.getElementById("nome").value.trim();
+      const telefone = document.getElementById("tel").value.trim();
       const numeros = campoNumeros.value;
-      const comprovante = document.getElementById("comprovante").files[0];
+      const arquivo = document.getElementById("comprovante").files[0];
 
-      if (!comprovante) {
-        resposta.innerText = "Por favor, anexe o comprovante.";
+      if (!arquivo) {
+        document.getElementById("resposta").innerText = "Envie o comprovante de pagamento.";
         return;
       }
 
-      const formData = new FormData();
-      formData.append("nome", nome);
-      formData.append("telefone", telefone);
-      formData.append("numeros", numeros);
-      formData.append("comprovante", comprovante);
+      const reader = new FileReader();
+      reader.onload = async function () {
+        const base64 = reader.result.split(',')[1];
+        const payload = {
+          nome,
+          telefone,
+          numeros,
+          filename: arquivo.name,
+          filetype: arquivo.type,
+          base64
+        };
 
-      try {
-        const res = await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
+        const resposta = await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
           method: "POST",
-          body: formData
+          body: JSON.stringify(payload),
+          headers: { "Content-Type": "application/json" }
         });
-        const msg = await res.text();
-        resposta.innerText = msg;
-        if (msg.includes("sucesso")) {
-          window.location.reload();
+
+        const texto = await resposta.text();
+        document.getElementById("resposta").innerText = texto;
+
+        if (texto.includes("sucesso")) {
+          selecionados.forEach(num => {
+            const btn = document.getElementById("btn" + num.replace(/^'/, ''));
+            if (btn) {
+              btn.classList.remove("selecionado");
+              btn.classList.add("ocupado", "pago");
+              btn.disabled = true;
+            }
+          });
+          selecionados = [];
+          campoNumeros.value = "";
+          document.getElementById("formulario").reset();
         }
-      } catch (err) {
-        resposta.innerText = "Erro ao enviar. Tente novamente.";
-      }
+      };
+
+      reader.readAsDataURL(arquivo);
     });
   </script>
 
