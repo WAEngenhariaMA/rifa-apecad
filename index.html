@@ -20,7 +20,8 @@
     }
 
     .btn {
-      padding: 10px;
+      padding: 8px;
+      font-size: 14px;
       background: #ff9800;
       color: white;
       border: none;
@@ -151,7 +152,6 @@
 
     carregarOcupados();
 
-    // Máscara telefone
     telefoneInput.addEventListener("input", function (e) {
       let x = e.target.value.replace(/\D/g, "").substring(0, 11);
       if (x.length <= 10) {
@@ -162,7 +162,6 @@
       e.target.value = x.trim();
     });
 
-    // Envio do formulário com comprovante em base64
     document.getElementById("formulario").addEventListener("submit", async function (e) {
       e.preventDefault();
 
