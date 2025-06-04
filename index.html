@@ -43,17 +43,17 @@
     }
 
     .pago {
-      background: #4CAF50 !important;
+      background: #4caf50 !important;
+      color: white;
     }
 
-    input, input[type="file"] {
+    input, button, textarea {
       padding: 8px;
       margin: 5px;
       width: 250px;
     }
 
     button[type="submit"] {
-      margin-top: 10px;
       background: #388e3c;
       color: white;
       border: none;
@@ -81,8 +81,6 @@
   </style>
 </head>
 <body>
-
-  <!-- LOGO SUPERIOR -->
   <div class="banner">
     <img src="https://waengenhariama.github.io/rifa-apecad/sup-logo1.png" alt="Banner Topo" />
   </div>
@@ -92,17 +90,16 @@
 
   <div id="grid" class="grid"></div>
 
-  <form id="reservaForm">
+  <form id="formulario">
     <input type="text" name="nome" id="nome" placeholder="Seu nome completo" required /><br />
     <input type="tel" name="telefone" id="tel" placeholder="Seu telefone ou WhatsApp" maxlength="15" required /><br />
-    <input type="file" name="comprovante" id="comprovante" accept="image/*,application/pdf" required><br />
+    <input type="file" name="comprovante" id="comprovante" accept="image/*" required /><br />
     <input type="hidden" name="numeros" id="numeros" />
     <button type="submit">✅ Reservar Números</button>
   </form>
 
   <p id="resposta"></p>
 
-  <!-- LOGO INFERIOR -->
   <div class="banner" style="margin-top: 30px;">
     <img src="https://waengenhariama.github.io/rifa-apecad/infer-logo.png" alt="Banner Inferior" />
   </div>
@@ -111,7 +108,7 @@
     const grid = document.getElementById("grid");
     const campoNumeros = document.getElementById("numeros");
     const telefoneInput = document.getElementById("tel");
-    const form = document.getElementById("reservaForm");
+    const form = document.getElementById("formulario");
     const resposta = document.getElementById("resposta");
     let selecionados = [];
 
@@ -139,16 +136,19 @@
       const res = await fetch("https://opensheet.elk.sh/1tqeY7nKhF_tQfWCpB9hXY-TCSKkAtjBvT-fqHZeu8wU/Página1");
       const dados = await res.json();
       dados.forEach(row => {
-        if (row.clnnumero) {
-          const pago = row.clnpago && row.clnpago.toLowerCase() === "ok";
+        if (row.clnnumero && row.clnpago) {
           row.clnnumero.split(',').map(n => n.trim().replace(/^'/, '')).forEach(numero => {
-            let btn = document.getElementById("btn" + numero);
+            const btn = document.getElementById("btn" + numero);
             if (btn) {
-              if (pago) {
-                btn.classList.add("pago");
-              } else {
-                btn.classList.add("ocupado");
-              }
+              btn.classList.add("pago");
+              btn.disabled = true;
+            }
+          });
+        } else if (row.clnnumero) {
+          row.clnnumero.split(',').map(n => n.trim().replace(/^'/, '')).forEach(numero => {
+            const btn = document.getElementById("btn" + numero);
+            if (btn) {
+              btn.classList.add("ocupado");
               btn.disabled = true;
             }
           });
@@ -168,64 +168,21 @@
       e.target.value = x.trim();
     });
 
-    function formatarNumeros() {
-      campoNumeros.value = selecionados.map(num => (parseInt(num) < 100 ? `'${num}` : num)).join(",");
-    }
-
     form.addEventListener("submit", async function (e) {
       e.preventDefault();
+      const formData = new FormData(form);
+      formData.set("numeros", campoNumeros.value);
 
-      formatarNumeros();
+      const res = await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
+        method: "POST",
+        body: formData
+      });
 
-      const nome = document.getElementById("nome").value.trim();
-      const telefone = document.getElementById("tel").value.trim();
-      const numeros = campoNumeros.value;
-      const arquivo = document.getElementById("comprovante").files[0];
-
-      if (!nome || !telefone || !numeros || !arquivo) {
-        resposta.innerText = "Preencha todos os campos e anexe o comprovante.";
-        return;
+      const txt = await res.text();
+      resposta.innerText = txt;
+      if (txt.includes("sucesso")) {
+        setTimeout(() => window.location.reload(), 3000);
       }
-
-      const reader = new FileReader();
-      reader.onload = async function () {
-        const base64 = reader.result.split(",")[1];
-
-        const data = {
-          nome: nome,
-          telefone: telefone,
-          numeros: numeros,
-          comprovante: base64,
-          nomeArquivo: arquivo.name
-        };
-
-        try {
-          const res = await fetch("https://script.google.com/macros/s/AKfycbzv1DHfQKvXsEWNx-fddoMktp5aQWvCSwpa8LWdtLpmp9eCNPoF3S5MJ3jvxc4d3chIqQ/exec", {
-            method: "POST",
-            body: JSON.stringify(data),
-            headers: {
-              "Content-Type": "application/json"
-            }
-          });
-
-          const respostaTxt = await res.text();
-          resposta.innerText = respostaTxt;
-          if (respostaTxt.includes("sucesso")) {
-            selecionados.forEach(n => {
-              let b = document.getElementById("btn" + n);
-              if (b) {
-                b.classList.remove("selecionado");
-                b.classList.add("pago");
-                b.disabled = true;
-              }
-            });
-            selecionados = [];
-          }
-        } catch (err) {
-          resposta.innerText = "Erro ao enviar dados.";
-        }
-      };
-      reader.readAsDataURL(arquivo);
     });
   </script>
 </body>
