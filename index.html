@@ -98,6 +98,11 @@
       max-width: 600px;
       border-radius: 6px;
     }
+
+    .legenda {
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
   </style>
 </head>
 <body>
@@ -108,7 +113,14 @@
   </div>
 
   <h2>🎟️ <strong>Rifa APECAD 2025</strong></h2>
-  <p>Cada número custa <strong>R$ 10,00</strong>. Escolha seus números abaixo:</p>
+  <p>
+    Cada número custa <strong>R$ 10,00</strong>. Escolha seus números abaixo:
+  </p>
+  <div class="legenda">
+    <span style="color: #4caf50; font-weight: bold;">🟩 Verde:</span> Pago |
+    <span style="color: #888; font-weight: bold;">⬛ Cinza:</span> Reservado |
+    <span style="color: #ff9800; font-weight: bold;">🟧 Laranja:</span> Disponível
+  </div>
 
   <div id="grid" class="grid"></div>
 
